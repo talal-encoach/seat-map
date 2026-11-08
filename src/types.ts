@@ -1,39 +1,39 @@
-export type DeskStatus = 'available' | 'occupied' | 'reserved'
+export type DeskStatus = 'free' | 'occupied' | 'new-hire' | 'suggested'
 
-export type ZoneId = 'windows' | 'core' | 'quiet'
+export type FloorId = 4 | 5
+
+export interface Person {
+  id: string
+  name: string
+  role: string
+  team: string
+  startDate?: string
+  isNewHire: boolean
+  avatarHue: number
+}
 
 export interface Desk {
   id: string
   label: string
-  zone: ZoneId
-  row: number
-  col: number
-  hireId: string | null
+  floor: FloorId
+  podId: string
+  /** Local position inside the pod (desk grid). */
+  localX: number
+  localZ: number
+  personId: string | null
+  suggested?: boolean
 }
 
-export interface Hire {
+export interface Pod {
   id: string
   name: string
-  role: string
-  startDate: string
   team: string
-  preferredZone?: ZoneId
+  floor: FloorId
+  /** World position of pod origin on the floor. */
+  x: number
+  z: number
+  cols: number
+  rows: number
 }
 
-export interface SeatState {
-  desks: Desk[]
-  hires: Hire[]
-  selectedHireId: string | null
-  selectedDeskId: string | null
-  filter: 'all' | 'available' | 'occupied'
-  query: string
-}
-
-export const ZONE_META: Record<
-  ZoneId,
-  { label: string; blurb: string }
-> = {
-  windows: { label: 'Window line', blurb: 'Natural light, open desks' },
-  core: { label: 'Core bay', blurb: 'Near collaboration rooms' },
-  quiet: { label: 'Quiet corner', blurb: 'Focus seating, low foot traffic' },
-}
+export type HireFilter = 'all' | 'unseated' | 'seated'

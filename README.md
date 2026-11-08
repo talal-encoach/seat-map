@@ -1,18 +1,20 @@
-# Desklane
+# Seat Map
 
-Interactive seat map for assigning desks to new hires.
+Isometric office seat map for assigning desks to new hires.
 
-## Run locally
+## Run
 
 ```bash
 npm install
 npm run dev
 ```
 
-## What it does
+## Features
 
-- Floor map with Window line, Core bay, and Quiet corner zones
-- New-hire queue with search and preferred zones
-- Click a hire, then an open desk to assign
-- Inspect desks, clear seats, or assign from the detail panel
-- Sample data persists in the browser (`localStorage`)
+- Interactive 3D floor plan with team pods (Floor 4 / Floor 5)
+- Stats for desks, occupancy, free seats, and hires needing a desk
+- Select a new hire, then click a free desk to seat them
+- Desk dialog to seat, unseat, or move people
+- Hire list with add / remove / filter by seating status
+- Suggested desks highlighted for the active floor
+- Sample data persists in the browser

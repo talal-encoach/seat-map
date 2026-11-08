@@ -1,138 +1,234 @@
-import type { Desk, Hire } from '../types'
+import type { Desk, FloorId, Person, Pod } from '../types'
 
-function desk(
-  id: string,
-  label: string,
-  zone: Desk['zone'],
-  row: number,
-  col: number,
-  hireId: string | null = null,
-): Desk {
-  return { id, label, zone, row, col, hireId }
+const FIRST = [
+  'Alex',
+  'Zoe',
+  'Priya',
+  'Noah',
+  'Mia',
+  'Leo',
+  'Ava',
+  'Kai',
+  'Elena',
+  'Sam',
+  'Jordan',
+  'Riley',
+  'Chris',
+  'Nina',
+  'Tom',
+  'Maya',
+  'Omar',
+  'Ivy',
+  'Ben',
+  'Lara',
+  'Dev',
+  'Skye',
+  'Jon',
+  'Tess',
+  'Quin',
+  'Ash',
+  'Remy',
+  'Eden',
+  'Hugo',
+  'Vera',
+  'Felix',
+  'Nora',
+  'Miles',
+  'Cora',
+  'Owen',
+  'Jade',
+]
+
+const ROLES = [
+  'Engineer',
+  'Designer',
+  'PM',
+  'Analyst',
+  'Recruiter',
+  'Writer',
+  'CSM',
+  'Finance',
+]
+
+function hue(i: number) {
+  return (i * 47) % 360
 }
 
-export const SEED_HIRES: Hire[] = [
+export const PODS: Pod[] = [
+  // Floor 4
+  { id: 'p4-design', name: 'Design', team: 'Design', floor: 4, x: -10, z: -6, cols: 3, rows: 2 },
+  { id: 'p4-platform', name: 'Platform', team: 'Platform', floor: 4, x: -2, z: -6, cols: 3, rows: 2 },
+  { id: 'p4-product', name: 'Product', team: 'Product', floor: 4, x: 6, z: -6, cols: 3, rows: 2 },
+  { id: 'p4-cx', name: 'CX', team: 'CX', floor: 4, x: -10, z: 2, cols: 3, rows: 2 },
+  { id: 'p4-ops', name: 'Ops', team: 'Ops', floor: 4, x: -2, z: 2, cols: 2, rows: 2 },
+  // Floor 5
+  { id: 'p5-mkt', name: 'Marketing', team: 'Marketing', floor: 5, x: -10, z: -6, cols: 3, rows: 2 },
+  { id: 'p5-people', name: 'People', team: 'People', floor: 5, x: -2, z: -6, cols: 3, rows: 2 },
+  { id: 'p5-insights', name: 'Insights', team: 'Insights', floor: 5, x: 6, z: -6, cols: 3, rows: 2 },
+  { id: 'p5-eng', name: 'Engineering', team: 'Engineering', floor: 5, x: -10, z: 2, cols: 3, rows: 2 },
+  { id: 'p5-lead', name: 'Leadership', team: 'Leadership', floor: 5, x: -2, z: 2, cols: 2, rows: 2 },
+]
+
+function buildDesks(): { desks: Desk[]; seated: Person[] } {
+  const desks: Desk[] = []
+  const seated: Person[] = []
+  let personIdx = 0
+  let deskSerial = 1
+
+  for (const pod of PODS) {
+    for (let r = 0; r < pod.rows; r++) {
+      for (let c = 0; c < pod.cols; c++) {
+        const id = `d-${pod.id}-${r}-${c}`
+        const label = `${pod.floor === 4 ? 'A' : 'B'}${String(deskSerial).padStart(2, '0')}`
+        deskSerial++
+
+        // ~64% occupied among non-reserved seats
+        const shouldOccupy = (personIdx + r * 3 + c) % 5 !== 0 && personIdx < 36
+        let personId: string | null = null
+        if (shouldOccupy && personIdx < FIRST.length) {
+          const p: Person = {
+            id: `emp-${personIdx}`,
+            name: FIRST[personIdx],
+            role: ROLES[personIdx % ROLES.length],
+            team: pod.team,
+            isNewHire: false,
+            avatarHue: hue(personIdx),
+          }
+          seated.push(p)
+          personId = p.id
+          personIdx++
+        }
+
+        desks.push({
+          id,
+          label,
+          floor: pod.floor,
+          podId: pod.id,
+          localX: (c - (pod.cols - 1) / 2) * 1.35,
+          localZ: (r - (pod.rows - 1) / 2) * 1.45,
+          personId,
+        })
+      }
+    }
+  }
+
+  return { desks, seated }
+}
+
+const built = buildDesks()
+
+export const SEED_OCCUPANTS: Person[] = built.seated
+
+export const SEED_HIRES: Person[] = [
   {
-    id: 'h1',
-    name: 'Maya Chen',
+    id: 'nh-1',
+    name: 'Priya Shah',
     role: 'Product Designer',
-    startDate: '2026-11-10',
     team: 'Design',
-    preferredZone: 'windows',
+    startDate: '2026-11-09',
+    isNewHire: true,
+    avatarHue: 12,
   },
   {
-    id: 'h2',
+    id: 'nh-2',
     name: 'Jordan Blake',
     role: 'Software Engineer',
-    startDate: '2026-11-12',
     team: 'Platform',
-    preferredZone: 'core',
+    startDate: '2026-11-10',
+    isNewHire: true,
+    avatarHue: 200,
   },
   {
-    id: 'h3',
+    id: 'nh-3',
     name: 'Sam Okonkwo',
     role: 'Customer Success',
-    startDate: '2026-11-17',
     team: 'CX',
-    preferredZone: 'quiet',
+    startDate: '2026-11-12',
+    isNewHire: true,
+    avatarHue: 140,
   },
   {
-    id: 'h4',
+    id: 'nh-4',
     name: 'Riley Park',
     role: 'Data Analyst',
-    startDate: '2026-11-17',
     team: 'Insights',
-    preferredZone: 'core',
+    startDate: '2026-11-12',
+    isNewHire: true,
+    avatarHue: 280,
   },
   {
-    id: 'h5',
+    id: 'nh-5',
     name: 'Avery Nguyen',
     role: 'Recruiter',
-    startDate: '2026-11-24',
     team: 'People',
-    preferredZone: 'windows',
-  },
-]
-
-export const SEED_DESKS: Desk[] = [
-  // Window line — 3 cols × 3 rows
-  desk('d-w-1', 'W-01', 'windows', 0, 0, 'seed-a'),
-  desk('d-w-2', 'W-02', 'windows', 0, 1),
-  desk('d-w-3', 'W-03', 'windows', 0, 2),
-  desk('d-w-4', 'W-04', 'windows', 1, 0),
-  desk('d-w-5', 'W-05', 'windows', 1, 1),
-  desk('d-w-6', 'W-06', 'windows', 1, 2, 'seed-b'),
-  desk('d-w-7', 'W-07', 'windows', 2, 0),
-  desk('d-w-8', 'W-08', 'windows', 2, 1),
-  desk('d-w-9', 'W-09', 'windows', 2, 2),
-
-  // Core bay — 4 cols × 3 rows
-  desk('d-c-1', 'C-01', 'core', 0, 0, 'seed-c'),
-  desk('d-c-2', 'C-02', 'core', 0, 1),
-  desk('d-c-3', 'C-03', 'core', 0, 2),
-  desk('d-c-4', 'C-04', 'core', 0, 3, 'seed-d'),
-  desk('d-c-5', 'C-05', 'core', 1, 0),
-  desk('d-c-6', 'C-06', 'core', 1, 1),
-  desk('d-c-7', 'C-07', 'core', 1, 2),
-  desk('d-c-8', 'C-08', 'core', 1, 3),
-  desk('d-c-9', 'C-09', 'core', 2, 0),
-  desk('d-c-10', 'C-10', 'core', 2, 1, 'seed-e'),
-  desk('d-c-11', 'C-11', 'core', 2, 2),
-  desk('d-c-12', 'C-12', 'core', 2, 3),
-
-  // Quiet corner — 2 cols × 3 rows
-  desk('d-q-1', 'Q-01', 'quiet', 0, 0),
-  desk('d-q-2', 'Q-02', 'quiet', 0, 1, 'seed-f'),
-  desk('d-q-3', 'Q-03', 'quiet', 1, 0),
-  desk('d-q-4', 'Q-04', 'quiet', 1, 1),
-  desk('d-q-5', 'Q-05', 'quiet', 2, 0),
-  desk('d-q-6', 'Q-06', 'quiet', 2, 1),
-]
-
-/** Existing teammates already seated (not in the new-hire queue). */
-export const SEED_OCCUPANTS: Hire[] = [
-  {
-    id: 'seed-a',
-    name: 'Priya Shah',
-    role: 'Eng Manager',
-    startDate: '2024-03-01',
-    team: 'Platform',
+    startDate: '2026-11-17',
+    isNewHire: true,
+    avatarHue: 40,
   },
   {
-    id: 'seed-b',
-    name: 'Leo Martins',
-    role: 'Designer',
-    startDate: '2025-01-15',
-    team: 'Design',
-  },
-  {
-    id: 'seed-c',
-    name: 'Nina Vogel',
-    role: 'PM',
-    startDate: '2023-09-12',
-    team: 'Product',
-  },
-  {
-    id: 'seed-d',
-    name: 'Chris Ortiz',
+    id: 'nh-6',
+    name: 'Casey Moore',
     role: 'Engineer',
-    startDate: '2025-06-02',
-    team: 'Platform',
+    team: 'Engineering',
+    startDate: '2026-11-17',
+    isNewHire: true,
+    avatarHue: 320,
   },
   {
-    id: 'seed-e',
-    name: 'Elena Rossi',
-    role: 'Finance',
-    startDate: '2024-11-04',
-    team: 'Ops',
+    id: 'nh-7',
+    name: 'Harper Lin',
+    role: 'PM',
+    team: 'Product',
+    startDate: '2026-11-19',
+    isNewHire: true,
+    avatarHue: 90,
   },
   {
-    id: 'seed-f',
-    name: 'Tom Hughes',
-    role: 'Writer',
-    startDate: '2025-08-18',
+    id: 'nh-8',
+    name: 'Drew Patel',
+    role: 'Marketing',
     team: 'Marketing',
+    startDate: '2026-11-20',
+    isNewHire: true,
+    avatarHue: 170,
+  },
+  {
+    id: 'nh-9',
+    name: 'Quinn Ellis',
+    role: 'Finance',
+    team: 'Ops',
+    startDate: '2026-11-24',
+    isNewHire: true,
+    avatarHue: 220,
+  },
+  {
+    id: 'nh-10',
+    name: 'Taylor Kim',
+    role: 'Designer',
+    team: 'Design',
+    startDate: '2026-11-24',
+    isNewHire: true,
+    avatarHue: 30,
   },
 ]
 
-export const STORAGE_KEY = 'desklane-seat-state-v1'
+/** Mark a couple free desks as suggested for the next hire. */
+export function withSuggestions(desks: Desk[], floor: FloorId, team?: string): Desk[] {
+  const free = desks.filter((d) => {
+    if (d.personId || d.floor !== floor) return false
+    if (!team || team === 'all') return true
+    const pod = PODS.find((p) => p.id === d.podId)
+    return pod?.team === team
+  })
+  const suggestedIds = new Set(free.slice(0, 3).map((d) => d.id))
+  return desks.map((d) => ({ ...d, suggested: suggestedIds.has(d.id) }))
+}
+
+export const SEED_DESKS: Desk[] = withSuggestions(built.desks, 4)
+
+export const STORAGE_KEY = 'seatmap-office-v2'
+
+export const TEAMS = [
+  'all',
+  ...Array.from(new Set(PODS.map((p) => p.team))),
+]

@@ -1,125 +1,132 @@
 import './App.css'
-import { DeskDetail } from './components/DeskDetail'
-import { FloorMap } from './components/FloorMap'
-import { HireQueue } from './components/HireQueue'
+import { DeskDialog } from './components/DeskDialog'
+import { HirePanel } from './components/HirePanel'
+import { OfficeCanvas } from './components/OfficeCanvas'
+import { StatsBar } from './components/StatsBar'
+import { TEAMS } from './data/seed'
 import { useSeatStore } from './hooks/useSeatStore'
+import type { FloorId } from './types'
 
 export default function App() {
   const store = useSeatStore()
-  const selectedPerson = store.selectedDesk?.hireId
-    ? store.peopleById.get(store.selectedDesk.hireId) ?? null
+  const selectedPerson = store.selectedDesk?.personId
+    ? store.peopleById.get(store.selectedDesk.personId) ?? null
     : null
 
   return (
-    <div className="app">
-      <header className="topbar">
-        <div className="brand">
-          <div className="brand-mark">
-            <div className="brand-glyph" aria-hidden="true">
-              <span />
-              <span />
-              <span />
-              <span />
-            </div>
-            <h1>Desklane</h1>
-          </div>
-          <p>
-            Floor map for seating new hires — pick someone from the queue, then
-            place them on an open desk.
-          </p>
+    <div className="shell">
+      <header className="top">
+        <div className="title-block">
+          <p className="breadcrumb">Workplace / New hire seating</p>
+          <h1>Seat Map</h1>
         </div>
         <div className="top-actions">
           <button
             type="button"
-            className="btn btn-ghost"
-            onClick={store.resetDemo}
+            className="btn ghost"
+            onClick={() => store.setPanelOpen(!store.panelOpen)}
           >
+            {store.panelOpen ? 'Hide hires' : 'Hire list'}
+          </button>
+          <button type="button" className="btn ghost" onClick={store.resetDemo}>
             Reset demo
           </button>
         </div>
       </header>
 
-      <main className="main-stage">
-        <div className="toolbar">
-          <div className="stats" aria-live="polite">
-            <span>
-              <strong>{store.stats.available}</strong> open
-            </span>
-            <span>
-              <strong>{store.stats.occupied}</strong> seated
-            </span>
-            <span>
-              <strong>{store.stats.waiting}</strong> waiting
-            </span>
-          </div>
-          <div className="segmented" role="group" aria-label="Desk filter">
-            {(
-              [
-                ['all', 'All'],
-                ['available', 'Open'],
-                ['occupied', 'Seated'],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={store.filter === value}
-                onClick={() => store.setFilter(value)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
+      <StatsBar
+        total={store.stats.total}
+        pods={store.stats.pods}
+        floors={store.stats.floors}
+        occupied={store.stats.occupied}
+        occupiedPct={store.stats.occupiedPct}
+        free={store.stats.free}
+        freeOn4={store.stats.freeOn4}
+        needDesk={store.stats.needDesk}
+        nextHireName={store.stats.nextHire?.name}
+        nextHireDate={store.stats.nextHire?.startDate}
+      />
 
-        <FloorMap
-          desks={store.desks}
+      <div className="toolbar">
+        <div className="segmented dark">
+          {([4, 5, 'all'] as const).map((f) => (
+            <button
+              key={String(f)}
+              type="button"
+              aria-pressed={store.floor === f}
+              onClick={() => store.setFloor(f === 'all' ? 'all' : (f as FloorId))}
+            >
+              {f === 'all' ? 'All floors' : `Floor ${f}`}
+            </button>
+          ))}
+        </div>
+        <select
+          className="field team-select"
+          value={store.team}
+          onChange={(e) => store.setTeam(e.target.value)}
+          aria-label="Filter by team"
+        >
+          {TEAMS.map((t) => (
+            <option key={t} value={t}>
+              {t === 'all' ? 'All teams' : t}
+            </option>
+          ))}
+        </select>
+        {store.selectedHire ? (
+          <div className="assign-banner row">
+            <p>
+              Seating <strong>{store.selectedHire.name}</strong> — click a free
+              desk
+            </p>
+            <button
+              type="button"
+              className="btn primary compact"
+              onClick={() => store.seatOnSuggested()}
+            >
+              Place on suggested
+            </button>
+          </div>
+        ) : (
+          <p className="assign-banner muted">
+            Open the hire list, pick someone, then place them on the floor
+          </p>
+        )}
+      </div>
+
+      <div className="workspace">
+        <OfficeCanvas
+          pods={store.visiblePods}
+          desks={store.visibleDesks}
           peopleById={store.peopleById}
           selectedDeskId={store.selectedDeskId}
           selectedHireId={store.selectedHireId}
-          selectedHire={store.selectedHire}
-          filter={store.filter}
           onSelectDesk={store.selectDesk}
         />
-      </main>
 
-      <aside className="aside">
-        <HireQueue
-          hires={store.unassignedHires}
+        <HirePanel
+          open={store.panelOpen}
+          hires={store.filteredHires}
+          seatedIds={store.seatedIds}
           selectedHireId={store.selectedHireId}
+          filter={store.hireFilter}
           query={store.query}
+          onClose={() => store.setPanelOpen(false)}
+          onFilter={store.setHireFilter}
           onQuery={store.setQuery}
           onSelect={store.selectHire}
+          onRemove={store.removeHire}
           onAdd={store.addHire}
         />
+      </div>
 
-        <DeskDetail
-          desk={store.selectedDesk}
-          person={selectedPerson}
-          waiting={store.unassignedHires}
-          onUnassign={store.unassignDesk}
-          onAssign={store.assignHireToDesk}
-        />
-
-        <section className="panel" aria-label="Recent assignments">
-          <h2>Placed this session</h2>
-          {store.assignedNewHires.length === 0 ? (
-            <p className="empty">No new hires seated yet.</p>
-          ) : (
-            <ul className="assigned-list">
-              {store.assignedNewHires.map(({ desk, hire }) => (
-                <li key={desk.id}>
-                  <span>{hire.name}</span>
-                  <strong>{desk.label}</strong>
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="sample-note" style={{ marginTop: '0.75rem' }}>
-            Sample office data · saved in this browser
-          </p>
-        </section>
-      </aside>
+      <DeskDialog
+        desk={store.selectedDesk}
+        person={selectedPerson}
+        waiting={store.unseatedHires}
+        onClose={() => store.setSelectedDeskId(null)}
+        onUnseat={store.unseatDesk}
+        onSeat={store.seatPerson}
+      />
 
       {store.toast ? (
         <div className="toast" role="status">
